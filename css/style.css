@@ -1,0 +1,25 @@
+section .container {
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:16px;
+}
+
+
+section .container h1 {
+  font-size:20px;
+  font-weight: bold;
+}
+
+.sidenav {
+  position: fixed;
+  right:0px;
+  top: 20px;
+  overflow: hidden;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+img.drakoside {
+  width: 200px;
+  height: 300px;
+  object-fit: contain;
+}

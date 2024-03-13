@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Batch processing in Oracle using a single PL/SQL Anonymous Block</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <style>
+#navbar{
+  width:100%;
+  /*other styles*/
+}
+#content{
+  width:920px;/*change the value to suite ur need*/
+  margin:0 auto;/*this will center ur content*/
+}
+    </style>      
+  </head>
+  <body>  
+    <nav class="sidenav">
+      <ul>
+        <li><a href="/">Homepage</a></li>
+        <li><a href="archives">Archives</a></li>
+        <li><a href="/tags.html">Tags</a></li>
+      </ul>
+      <img class="drakoside">
+    </nav>
+
+    <article>
+      <section>
+        <div id="content" class="container">
+          <h1>Batch processing in Oracle using a single PL/SQL Anonymous Block</h1>
+          <small>
+            Published on: 2024-03-13 - <a href="/posts/2024-03-13-batch_processing_oracle.html"> Permalink </a>
+            <span style="word-spacing: 10px; float: right;">
+              
+              <a href="/tags/oracle">Oracle</a>
+              
+              <a href="/tags/pl-sql">PL/SQL</a>
+              
+              </span>
+          </small> 
+          <br>
+          <br>
+
+          
+          <p>As an Oracle consultant a very common activity is to perform commands in batch, for example: rebuild invalid indexes on a given schema, unlock all locked users on the database, recompile invalid stored procedures, etc.</p>
+<p>One of the most common techniques I learnt and seen on field is to dynamically build the commands needed to be executed, put them on a script and after that execute it, for example, on a SQL Developer window or directly on SQL*Plus, while this approach works fine, it can't be easily automated, this is relevant specially when we have to automate this batch processing, like when we have to disable all indexes from a staging schema before loading data.</p>
+<p>My personal favorite option for doing batch processing is to use dynamic sql execution inside a looped cursor, a technique I found on an old Oracle forum. below you may find an example of how to rebuild indexes from a specific schema</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">DECLARE
+</span><span style="color:#c0c5ce;">  c_schema_name CONSTANT </span><span style="color:#b48ead;">VARCHAR2</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">30</span><span style="color:#c0c5ce;">) := &#39;</span><span style="color:#a3be8c;">SCOTT</span><span style="color:#c0c5ce;">&#39;;
+</span><span style="color:#b48ead;">BEGIN
+</span><span style="color:#c0c5ce;">  FOR c_r </span><span style="color:#b48ead;">IN</span><span style="color:#c0c5ce;"> ( </span><span style="color:#b48ead;">SELECT</span><span style="color:#c0c5ce;"> owner, index_name
+</span><span style="color:#c0c5ce;">                 </span><span style="color:#b48ead;">FROM</span><span style="color:#c0c5ce;"> dba_indexes
+</span><span style="color:#c0c5ce;">                </span><span style="color:#b48ead;">WHERE</span><span style="color:#c0c5ce;"> status != &#39;</span><span style="color:#a3be8c;">VALID</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#c0c5ce;">                  </span><span style="color:#b48ead;">AND</span><span style="color:#c0c5ce;"> owner = c_schema_name
+</span><span style="color:#c0c5ce;">             ) LOOP
+</span><span style="color:#c0c5ce;">    EXECUTE IMMEDIATE &#39;</span><span style="color:#a3be8c;">ALTER INDEX &quot;</span><span style="color:#c0c5ce;">&#39; || </span><span style="color:#d08770;">c_r</span><span style="color:#c0c5ce;">.</span><span style="color:#d08770;">owner </span><span style="color:#c0c5ce;">|| &#39;</span><span style="color:#a3be8c;">&quot;.&quot;</span><span style="color:#c0c5ce;">&#39; || </span><span style="color:#d08770;">c_r</span><span style="color:#c0c5ce;">.</span><span style="color:#d08770;">index_name </span><span style="color:#c0c5ce;">|| &#39;</span><span style="color:#a3be8c;">&quot; REBUILD</span><span style="color:#c0c5ce;">&#39;;
+</span><span style="color:#c0c5ce;">  </span><span style="color:#b48ead;">END</span><span style="color:#c0c5ce;"> LOOP;
+</span><span style="color:#b48ead;">END</span><span style="color:#c0c5ce;">;
+</span><span style="color:#c0c5ce;">/
+</span></code></pre>
+<p>Above script can be enhanced by using parallel processing with APEX_PLSQL_JOB.SUBMIT_PROCESS, of course if the APEX subsystem is not installed on the database, the same feature can be implemented using DBMS_SCHEDULER or DBMS_JOB, however the later is deprecated and might be removed on future Oracle releases.</p>
+
+        </div>
+      </section>
+    </article>
+
+<!-- Default Statcounter code for Androx.NET
+http://www.androx.net -->
+<script type="text/javascript">
+var sc_project=12975911; 
+var sc_invisible=0; 
+var sc_security="d1376fb0"; 
+var scJsHost = "https://";
+document.write("<sc"+"ript type='text/javascript' src='" +
+scJsHost+
+"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="web counter"
+href="https://statcounter.com/" target="_blank"><img
+class="statcounter"
+src="https://c.statcounter.com/12975911/0/d1376fb0/0/"
+alt="web counter"
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+
+  </body>
+</html>
+  

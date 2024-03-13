@@ -15,11 +15,12 @@
 }
     </style>      
   </head>
-  <body>
+  <body>  
     <nav class="sidenav">
       <ul>
         <li><a href="/">Homepage</a></li>
         <li><a href="archives">Archives</a></li>
+        <li><a href="/tags.html">Tags</a></li>
       </ul>
       <img class="drakoside">
     </nav>
@@ -28,7 +29,22 @@
       <section>
         <div id="content" class="container">
           <h1>Generate a sequence of numbers using a SQL query</h1>
-          Published on: 2024-03-11 - <a href="/posts/2024-03-11-number_generator.html"> Permalink </a> 
+          <small>
+            Published on: 2024-03-11 - <a href="/posts/2024-03-11-number_generator.html"> Permalink </a>
+            <span style="word-spacing: 10px; float: right;">
+              
+              <a href="/tags/sql">SQL</a>
+              
+              <a href="/tags/oracle">Oracle</a>
+              
+              <a href="/tags/mariadb">MariaDB</a>
+              
+              </span>
+          </small> 
+          <br>
+          <br>
+
+          
           <p>Sometimes we need to generate a sequence of numbers, maybe for cartesian products, or we want to work directly with number series using SQL expressions, for those cases I present a simple option using query recursiveness</p>
 <h3>Oracle</h3>
 <h5>Using CONNECT BY operator</h5>

@@ -22,7 +22,9 @@
         <li><a href="archives">Archives</a></li>
         <li><a href="/tags.html">Tags</a></li>
       </ul>
+      <!-- 
       <img class="drakoside">
+      -->
     </nav>
 
     <article>
@@ -32,6 +34,60 @@
           <p>Database | Programming | Videogames and personal stuff...</p>
 <hr>
 <article>
+<section>
+    <h2><a href="/posts/2024-06-06-update_gentoo_linux.html">Update Gentoo Linux</a> </h2>
+    <small>published on <time datetime="2024-06-06 22:27:37.604353849 +0000">2024-06-06 </time></small>
+    <p>Updating Gentoo is an easy process but it requires manual intervention, as with this distribution, it's very important to not skip any error and always inform yourself about what's going to be updated</p>
+<p><strong>Update dependency tree</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">eix-sync
+</span></code></pre>
+<p><strong>Retrieve and compile all packages including their dependencies</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">emerge -avuDN --with-bdeps y --keep-going @world
+</span></code></pre>
+<p>Please note that we're using the <code>--keep-going</code> flag, in case any package won't be merged at first, we need to make a note of it and try again after all other dependencies got merged, in some cases the dependency link got broken or some packages needs to be updated beforehand, playing with the USE flags can also raise a lot of errors, mostly because some libraries were compiled with different profiles, will depend on each case what we should do in order to fix it.</p>
+<p><strong>Update configuration files</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">dispatch-conf
+</span></code></pre>
+<p>Never forget to check which configuration options are being updated</p>
+<p><strong>Delete obsolete packages</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">emerge -av --depclean
+</span></code></pre>
+<p><strong>Cleanup using gentoolkit</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">revdep-rebuild
+</span></code></pre>
+<p><strong>Cleanup</strong></p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">eclean -d distfiles
+</span></code></pre>
+<h2>Troubleshooting</h2>
+<h3>Masked packages</h3>
+<p>Some new package version are being masked, either because more testing is needed or because it hasn't been patched for a specific architecture or configuration set, the most common mask is <code>~amd64</code>, if we want to go and install it we can add it on our packages.accept_keyword path in portage</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">tux ~ # cat /etc/portage/package.accept_keywords/libudev-compat
+</span><span style="color:#c0c5ce;">sys-libs/libudev-compat ~amd64
+</span></code></pre>
+<section class="hacky">
+<p>Above package is a requirement for the <code>steam-launcher</code> package (non-official), just like all unofficial packages, they're not deeply tested and it usually implies the usage of masked packages, we should also consider the choice of masking the conflictive package, in case you're not aware, the steam launcher updates itself periodically, so we can skip it for now, in order to do so we need to mask it:</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">tux ~ # cat /etc/portage/package.mask/steam-launcher
+</span><span style="color:#c0c5ce;">&gt;=games-util/steam-launcher-1.0.0.78-r1
+</span></code></pre>
+<p>The next time we try to merge @world it will warns us for our current mask</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">!!! The following installed packages are masked:
+</span><span style="color:#c0c5ce;">- games-util/steam-launcher-1.0.0.78-r1::steam-overlay (masked by: package.mask)
+</span><span style="color:#c0c5ce;">For more information, see the MASKED PACKAGES section in the emerge
+</span><span style="color:#c0c5ce;">man page or refer to the Gentoo Handbook.
+</span></code></pre>
+<p>That's because our package is registered in <code>@world</code>, but since we've also masked it, it can't be merged.</p>
+<p>At a glance it's a good idea to avoid the usage of masked packages as much as possible.</p>
+</section>
+  </section>
 <section>
     <h2><a href="/posts/2024-03-13-batch_processing_oracle.html">Batch processing in Oracle using a single PL/SQL Anonymous Block</a> </h2>
     <small>published on <time datetime="2024-03-13 17:46:52.759835481 +0000">2024-03-13 </time></small>

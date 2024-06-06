@@ -13,7 +13,6 @@ section .container h1 {
   position: fixed;
   right:100px;
   top: 20px;
-  overflow: hidden;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -23,8 +22,12 @@ img.drakoside {
   height: 350px;
   object-fit: contain;
   content:url("https://s3.us-east-2.amazonaws.com/ws.androx.net/looking_cool.png");
-  position: fixed;
+  position: relative;
   bottom: 100px;
+  top: 200px;
   right:0px;
- 
+}
+
+body {
+  line-height: 1.618;
 }

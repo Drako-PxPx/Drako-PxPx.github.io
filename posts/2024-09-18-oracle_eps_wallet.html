@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>External Password Store for Oracle Databases</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/posts.css" />
+    <style>
+#navbar{
+  width:100%;
+  /*other styles*/
+}
+#content{
+  width:920px;/*change the value to suite ur need*/
+  margin:0 auto;/*this will center ur content*/
+}
+    </style>      
+  </head>
+  <body>  
+    <nav class="sidenav">
+      <ul>
+        <li><a href="/">Homepage</a></li>
+        <li><a href="archives">Archives</a></li>
+        <li><a href="/tags.html">Tags</a></li>
+      </ul>
+      <!-- 
+      <img class="drakoside">
+      -->
+    </nav>
+
+    <article>
+      <section>
+        <div id="content" class="container">
+          <h1>External Password Store for Oracle Databases</h1>
+          <small>
+            Published on: 2024-09-18 - <a href="/posts/2024-09-18-oracle_eps_wallet.html"> Permalink </a>
+            <span style="word-spacing: 10px; float: right;">
+              
+              <a href="/tags/oracle">Oracle</a>
+              
+              </span>
+          </small> 
+          <br>
+          <br>
+
+          
+          <p>Sometimes we have the need to arrange a set of instructions or scripts on automated processes, E.g when we automate a backup process, or when we prepare a batch process to load data in a database or even practical maintenance processes, like purging an audit table.</p>
+<p>In the case of Oracle scripts, it's very common to use an externally authenticated user, this is, a user which is authenticated using an external identity, like the OS or a Kerberos service or an LDAP, however, besides the OS authentication, those are complex setups that includes more licensing costs and infrastructure.</p>
+<p>If we're not running those process on the database box, a common practice is to use a designed user for those processes, however, those credentials are usually enclosed on the job managers or parent scripts, even worse, the execution line for those scripts are recorded on log entries (which they might also include the user credentials)</p>
+<p>Oracle has a feature implemented on the OCI client named <a href="https://docs.oracle.com/cd//B19306_01/network.102/b14266/cnctslsh.htm#CBHEHGCE">Secure External Password Store</a>, it allows us to store credentials on an encrypted wallet and those can be accessed only by the client itself during the login operation.</p>
+<h2>Basic Syntax</h2>
+<p>We can create a new EPS wallet by using the "mkstore" command</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">mkstore -wrl &lt;wallet_location&gt; -create
+</span></code></pre>
+<p>Once created, we can manage its entries using the same command with the -createCredential parameter, just like this</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">mkstore -wrl &lt;wallet_location&gt; -createCredential &lt;db_connect_string&gt; &lt;username&gt; &lt;password&gt;
+</span></code></pre>
+<!-- 
+<section class="tip">
+
+The mkstore tool is included on a full Oracle RDBMS Home or on an Oracle Client Home, which is different from an Instant Client, which only includes the needed libraries to connect to an Oracle Database using the OCI drivers.
+
+As an alternative to install any of those, we can also use a docker container of the Oracle Database docker image and run mkstore (among all other tools from a RDBMS setup) like this
+
+```bash
+drako@tux ~ $ docker ps
+CONTAINER ID   IMAGE                                                        COMMAND                  CREATED        STATUS                   PORTS                                       NAMES
+3a1c1187d1fc   container-registry.oracle.com/database/enterprise:21.3.0.0   "/bin/sh -c 'exec $O…"   3 months ago   Up 5 minutes (healthy)   0.0.0.0:1521->1521/tcp, :::1521->1521/tcp   testdb
+
+drako@tux ~ $ docker exec -it testdb
+Oracle Secret Store Tool Release 21.0.0.0.0 - Production
+Version 21.3.0.0.0
+Copyright (c) 2004, 2021, Oracle and/or its affiliates. All rights reserved.
+
+mkstore (...)
+```
+
+We can even extend it by creating an alias around that
+
+```bash
+drako@tux ~ $ alias mkstore="docker exec -it testdb mkstore"
+drako@tux ~ $ mkstore -list
+Oracle Secret Store Tool Release 21.0.0.0.0 - Production
+Version 21.3.0.0.0
+Copyright (c) 2004, 2021, Oracle and/or its affiliates. All rights reserved.
+
+No wallet location specified. 
+(...)
+```
+
+Cool, isn't it? 
+
+We could even use the image directly, however as this command is intended to be used to create persistent files, not using it on a spawned container is practically useless
+</section>
+-->
+<p>After that, we need to setup our sqlnet.ora file with the following entries</p>
+<ul>
+<li>WALLET_LOCATION</li>
+<li>SQLNET.WALLET_OVERRIDE</li>
+</ul>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#8fa1b3;">WALLET_LOCATION</span><span style="color:#c0c5ce;"> = 
+</span><span style="color:#c0c5ce;">  ( </span><span style="color:#8fa1b3;">SOURCE</span><span style="color:#c0c5ce;"> = 
+</span><span style="color:#c0c5ce;">    (</span><span style="color:#8fa1b3;">METHOD</span><span style="color:#c0c5ce;"> = FILE)
+</span><span style="color:#c0c5ce;">	(</span><span style="color:#8fa1b3;">METHOD_DATA</span><span style="color:#c0c5ce;"> = 
+</span><span style="color:#c0c5ce;">	  (</span><span style="color:#8fa1b3;">DIRECTORY</span><span style="color:#c0c5ce;"> = /path/to/eps)
+</span><span style="color:#c0c5ce;">	)
+</span><span style="color:#c0c5ce;">  )
+</span><span style="color:#8fa1b3;">SQLNET.WALLET_OVERRIDE</span><span style="color:#c0c5ce;"> = TRUE
+</span></code></pre>
+<p>Once everything is set, we can use the following connection string <code>/@&lt;db_connect_string&gt;</code> instead of  <code>&lt;user&gt;/&lt;password&gt;@&lt;db_connect_string&gt;</code></p>
+<!--
+## Hands-On
+
+Ok, now that we know the very basic syntax of mkstore, we can proceed to create our first EPS Wallet
+
+
+As we discussed earlier, we are going to create a wallet using the `-create` command, however before doing that we need to take one more consideration which is not expanded on the official documentation.
+
+When we start adding entries to our wallet, we need to set-up the following fields: `TNS entry`, `username`, `password`, however, as we already defined, we use an EPS Wallet entry only by referring the `<db_connect_string>`, we usually have only one credential for loggin into an Oracle database, however this might not be practical in case we need to use different credentials for different tasks (E.g. when we are setting different load jobs on the same box).
+
+In case we need to have multiple credentials for the same system we have different solutions, of course they depends on the system/business policies and the administrator creativity, here I'll show some approaches
+
+**Create a unique TNS entry for each credential**
+
+We create a new TNS entry for each credential under the tnsnames.ora file, for example, if we're going to add "scott" credentials then we also add a new TNS entry for that, for example
+
+```bash
+SCOTT_ORCL = (DESCRIPTION ...)
+```
+
+Please note that this option needs to have the startup parameter [GLOBAL_NAMES](https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/GLOBAL_NAMES.html#GUID-221D0483-D814-4963-84E1-7D39A25048ED) = false
+
+**Use a different OS user for each set of credentials**
+
+We create a new OS user per set of credentials, this could be handy even for seggregating processes by business area, even each process may have its own crontab
+
+**Use a different TNS Folder per credential set**
+
+We can have more than one sqlnet.ora/tnsadmin.ora set of files, and we can select the ones we want by manipulating the environment variable `TNS_ADMIN`, available on Linux/Unix and Windows systems, I do prefer this approach because it also helps when we need to isolate components while we have do troubleshoot any process.
+<section class="tip">
+Keep in mind that, while we can have an arbitrary number of EPS Wallets, each on its own location, we usually have only one SQL*Net Profile (sqlnet.ora), based on the Doc ID 464410.1, the search order for the SQL*Net Profile should be in the following order:
+
+* If set, the location defined on the `TNS_ADMIN` variable
+* the `$ORACLE_HOME/network/admin` path (default)
+</section>
+
+
+```bash
+$ mkdir epswallet
+$ mkstore -wrl epswallet -create
+Oracle Secret Store Tool Release 21.0.0.0.0 - Production
+Version 21.3.0.0.0
+Copyright (c) 2004, 2021, Oracle and/or its affiliates. All rights reserved.
+
+Enter password:   
+Enter password again:   
+```
+
+Please note that now we have 2 new files
+
+```bash
+$ ls -lsa epswallet
+total 8
+0 drwxr-xr-x 2 oracle oinstall  90 Apr  4 03:08 .
+0 drwxr-xr-x 1 oracle oinstall  44 Apr  4 03:07 ..
+4 -rw------- 1 oracle oinstall 194 Apr  4 03:08 cwallet.sso
+0 -rw------- 1 oracle oinstall   0 Apr  4 03:08 cwallet.sso.lck
+4 -rw------- 1 oracle oinstall 149 Apr  4 03:08 ewallet.p12
+0 -rw------- 1 oracle oinstall   0 Apr  4 03:08 ewallet.p12.lck
+```
+(these lck files can be ignored)
+
+Now we need to setup a SQL\*Net Profile, we can include any parameter to the sqlnet.ora file, however we need to setup  `WALLET_LOCATION` and `SQLNET.WALLET_OVERRIDE` as stated before
+
+```bash
+WALLET_LOCATION = 
+  ( SOURCE = 
+    (METHOD = FILE)
+    (METHOD_DATA = 
+      (DIRECTORY = /home/oracle/epswallet)
+    )
+  )
+SQLNET.WALLET_OVERRIDE = TRUE
+```
+-->
+<!-- 
+<section class="hacky">
+
+Do you know we can use SQL\*Plus as a very basic text editor?, honestly speaking it's not recommended in any way, but I want to note that it's possible and it's important to take it in consideration E.g. when creating security policies as we usually forget that, just like any interactive tool, the exposure surface increases
+
+```
+SQL> 1 WALLET_LOCATION =
+SQL> 2   ( SOURCE = 
+SQL> 3     (METHOD = FILE)
+SQL> 4 	(METHOD_DATA = 
+SQL> 5 	  (DIRECTORY = /home/oracle/epswallet)
+SQL> 6 	)
+SQL> 7   )
+SQL> 8 SQLNET.WALLET_OVERRIDE = TRUE
+SQL> list
+  1  WALLET_LOCATION =
+  2    ( SOURCE =
+  3	 (METHOD = FILE)
+  4  	(METHOD_DATA =
+  5  	  (DIRECTORY = /home/oracle/epswallet)
+  6  	)
+  7    )
+  8* SQLNET.WALLET_OVERRIDE = TRUE
+SQL> save sqlnet.ora
+Created file sqlnet.ora
+
+```
+</section>
+
+<section class="idea">
+Of course for this particular case where I'm using a docker container as an Oracle client setup, the best way to work is to directly transfer files between the host and the container itself, using the `cp`
+
+```bash
+docker cp <file.txt> container-name:/path/to/file
+```
+</section>
+-->
+<!-- 
+## Going further
+
+Now that we've created and managed our EPS wallet, it's worth to take a deeper look on what we've created and what else we can do with it
+
+
+
+## Useful links
+
+[ORACLE-BASE Secure External Password Store](https://oracle-base.com/articles/10g/secure-external-password-store-10gr2)
+
+-->
+        </div>
+      </section>
+    </article>
+
+<script src="\locals.js"></script>
+
+  </body>
+</html>
+  
